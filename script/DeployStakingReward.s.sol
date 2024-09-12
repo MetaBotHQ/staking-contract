@@ -11,6 +11,9 @@ contract DeployStakingReward is Script {
     address public rewardsToken;
     address public stakingToken;
 
+    //NOTE: Season can be started by calling notifyRewardAmount
+    //NOTE: duration can be updated by calling setRewardsDuration
+
     function run() external {
         assert(owner != address(0));
         assert(rewardsDistribution != address(0));
