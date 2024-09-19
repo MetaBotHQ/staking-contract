@@ -22,6 +22,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     uint256 public rewardsDuration = 7 days;
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
+    uint256 public minAmountToStake;
 
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
@@ -35,13 +36,15 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         address _owner,
         address _rewardsDistribution,
         address _rewardsToken,
-        address _stakingToken
+        address _stakingToken,
+        uint256 _minAmountToStake
     )
         RewardsDistributionRecipient(_owner)
     {
         rewardsToken = IERC20(_rewardsToken);
         stakingToken = IERC20(_stakingToken);
         rewardsDistribution = _rewardsDistribution;
+        minAmountToStake = _minAmountToStake;
     }
 
     /* ========== VIEWS ========== */
@@ -76,7 +79,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     function stake(uint256 amount) external nonReentrant whenNotPaused updateReward(msg.sender) {
-        require(amount > 0, "Cannot stake 0");
+        require(amount >= minAmountToStake, "Cannot stake less than minAmountToStake");
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         _totalSupply += amount;
         _balances[msg.sender] += amount;
@@ -144,6 +147,11 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         emit RewardsDurationUpdated(rewardsDuration);
     }
 
+    function setMinimumAmountToStake(uint256 newMinAmountToStake) external onlyOwner {
+        emit MinAmountToStakeUpdated(newMinAmountToStake, minAmountToStake);
+        minAmountToStake = newMinAmountToStake;
+    }
+
     /* ========== MODIFIERS ========== */
 
     modifier updateReward(address account) {
@@ -164,4 +172,5 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     event RewardPaid(address indexed user, uint256 reward);
     event RewardsDurationUpdated(uint256 newDuration);
     event Recovered(address token, uint256 amount);
+    event MinAmountToStakeUpdated(uint256 newMinAmount, uint256 oldMinAmount);
 }

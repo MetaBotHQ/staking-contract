@@ -10,6 +10,7 @@ contract DeployStakingReward is Script {
     address public rewardsDistribution;
     address public rewardsToken;
     address public stakingToken;
+    uint256 public minAmountToStake;
 
     //NOTE: Season can be started by calling notifyRewardAmount
     //NOTE: duration can be updated by calling setRewardsDuration
@@ -24,7 +25,7 @@ contract DeployStakingReward is Script {
 
         //deploy StakingRewards  contract
         StakingRewards stakingRewardsContract =
-            new StakingRewards(owner, rewardsDistribution, rewardsToken, stakingToken);
+            new StakingRewards(owner, rewardsDistribution, rewardsToken, stakingToken, minAmountToStake);
 
         console2.log("Staking rewards contract deployed at", address(stakingRewardsContract));
         vm.stopBroadcast();
