@@ -79,10 +79,10 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     function stake(uint256 amount) external nonReentrant whenNotPaused updateReward(msg.sender) {
-        require(amount >= minAmountToStake, "Cannot stake less than minAmountToStake");
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         _totalSupply += amount;
         _balances[msg.sender] += amount;
+        require(_balances[msg.sender] >= minAmountToStake, "Cannot stake less than minAmountToStake");
         emit Staked(msg.sender, amount);
     }
 
