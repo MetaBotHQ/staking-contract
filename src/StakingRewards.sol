@@ -23,9 +23,11 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
     uint256 public minAmountToStake;
+    uint256 public lockTime = 3 days;
 
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
+    mapping(address => uint256) public lastStakeTime;
 
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
@@ -82,12 +84,14 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         _totalSupply += amount;
         _balances[msg.sender] += amount;
+        lastStakeTime[msg.sender] = block.timestamp;
         require(_balances[msg.sender] >= minAmountToStake, "Cannot stake less than minAmountToStake");
         emit Staked(msg.sender, amount);
     }
 
     function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
         require(amount > 0, "Cannot withdraw 0");
+        require(block.timestamp >= lastStakeTime[msg.sender] + lockTime, "cannot withdraw until unlocked");
         _totalSupply -= amount;
         _balances[msg.sender] -= amount;
         stakingToken.safeTransfer(msg.sender, amount);
@@ -150,6 +154,18 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     function setMinimumAmountToStake(uint256 newMinAmountToStake) external onlyOwner {
         emit MinAmountToStakeUpdated(newMinAmountToStake, minAmountToStake);
         minAmountToStake = newMinAmountToStake;
+    }
+
+    function setPaused(bool _toPause) external onlyOwner {
+        if (_toPause) {
+            _pause();
+        } else {
+            _unpause();
+        }
+    }
+
+    function updateLockTime(uint256 newLockTime) external onlyOwner {
+        lockTime = newLockTime;
     }
 
     /* ========== MODIFIERS ========== */
